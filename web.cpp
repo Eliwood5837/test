@@ -8,12 +8,21 @@
 #include <queue>
 #include <set>
 #include <map>
+#include "ArgumentManager.h"
 using namespace std;
 int main(int argc, char* argv[]) {
 
+	/*if (argc < 2) {
+	std::cerr << "Usage: spellchecker inputfile=input.txt" << std::endl;
+	return -1;
+	}
+	ArgumentManager am(argc, argv);
+	const std::string script = am.get("script");
+	std::cout << "input script file name is " << script << std::endl;*/
+	//ifstream input(script);
 	ifstream input("input.txt");
+	ofstream graph("graph.txt");
 	string line;
-	//typedef unordered_map<string, unordered_set<string>> mymap;
 	unordered_map<string, unordered_set<string>> E;
 	unordered_set<string> V;
 	unordered_set<string> filenames;
@@ -29,15 +38,15 @@ int main(int argc, char* argv[]) {
 			stringstream test(line);
 			string func, file;
 			test >> func >> file;
-			ifstream newinput(file);
+			ifstream filelist(file);
 			string newline;
 			//newline is files
-			while (getline(newinput, newline)) {
-				ifstream fileinput(newline);
+			while (getline(filelist, newline)) {
+				ifstream thefiles(newline);
 				string theline;
-				cout << "FILE " << newline << endl;
+				//cout << "FILE " << newline << endl;
 				filenames.insert(newline);
-				while (getline(fileinput, theline)) {
+				while (getline(thefiles, theline)) {
 					//theline is inside
 					
 					if (theline.substr(0, 7) == "<a href") {
@@ -51,7 +60,7 @@ int main(int argc, char* argv[]) {
 						
 					}
 					for (auto i = V.begin(); i != V.end(); i++) {
-						cout << "pass" << endl;
+						//cout << "pass" << endl;
 						//cout << *i << endl;
 					}
 					
@@ -60,9 +69,7 @@ int main(int argc, char* argv[]) {
 				E.insert(make_pair(newline, V));
 				//E.insert_or_assign(newline, V);
 				V.clear();
-				cout << "new set" << endl;
-				//V.insert(newline);
-				//cout << "FILE " << newline << endl;
+
 			}
 
 		}
@@ -73,44 +80,63 @@ int main(int argc, char* argv[]) {
 	//cout << E.size();
 	int k = 0;
 	for (auto& x : E) {
-		cout << x.first << ": ";
+		//cout << x.first << ": ";
 		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end();itr++) {
-			cout << *itr << " ";
+			//cout << *itr << " ";
 			k++;
 		}
-		cout << endl;
+		//cout << endl;
 	}
-	cout << "edges"<<k;
-	cout << "vertices" << E.size();
+
 	unordered_map <string, int> indegrees;
 	for (auto&x : E) {
 		indegrees.insert(make_pair(x.first,0));
 		//indegrees.insert_or_assign(x.first,0);
 	}
 	for (auto&x : indegrees) {
-		cout << x.first << " " << x.second << endl;
+		//cout << x.first << " " << x.second << endl;
 	}
 	for (auto& x : E) {
 		int indeg = 0;
 		//cout << x.first << ": ";
 		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
 			//cout << *itr << " ";
-			cout << indegrees.find(*itr)->second++ << "increment"<<endl;
+			indegrees.find(*itr)->second++;
 		}
 		//cout << endl;
 	}
 	for (auto&x : indegrees) {
-		cout << x.first << " " << x.second << endl;
+		//cout << x.first << " " << x.second << endl;
 	}
 	//key = filename, value=indegree
 	priority_queue<int> q;
 	for (auto&x : indegrees) {
 		q.push(x.second);
 	}
+	
 	for (int i = 0; i < q.size(); i++) {
-		cout << q.top();
+		//cout << q.top();
 		q.pop();
 	}
+
+	int current_indegree = q.top();
+	//cout << "INDEG" << current_indegree<<endl;
+	set<string> top3;
+	for (auto& x : indegrees) {
+		if (x.second == current_indegree) {
+			top3.insert(x.first);
+		}
+		if (x.second == 0) {
+			graph << "isolated=" << x.first<<endl;
+		}
+	}
+
+	graph << "m="<<k<<endl;
+	graph << "n=" << E.size()<<endl;
+	for (string x : top3) {
+		graph << "top3="<<x << endl;
+	}
+	
 	system("pause");
 	return 0;
 }
