@@ -25,7 +25,6 @@ int main(int argc, char* argv[]) {
 	string line;
 	unordered_map<string, unordered_set<string>> E;
 	unordered_set<string> V;
-	unordered_set<string> filenames;
 
 	while (getline(input, line)) {
 		if (line.substr(0, 7) == "explore") {
@@ -45,7 +44,6 @@ int main(int argc, char* argv[]) {
 				ifstream thefiles(newline);
 				string theline;
 				//cout << "FILE " << newline << endl;
-				filenames.insert(newline);
 				while (getline(thefiles, theline)) {
 					//theline is inside
 
@@ -63,10 +61,8 @@ int main(int argc, char* argv[]) {
 
 					}
 
-
 				}
 				E.insert(make_pair(newline, V));
-
 				V.clear();
 
 			}
@@ -76,15 +72,14 @@ int main(int argc, char* argv[]) {
 
 
 	}
-
 	int k = 0;
 	for (auto& x : E) {
-		cout << x.first << ": ";
+		//cout << x.first << ": ";
 		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
-			cout << *itr << " ";
+		//	cout << *itr << " ";
 			k++;
 		}
-		cout << endl;
+		//cout << endl;
 	}
 
 	unordered_map <string, int> indegrees;
@@ -105,35 +100,47 @@ int main(int argc, char* argv[]) {
 	}
 	map<int, string> test;
 	for (auto&x : indegrees) {
-		cout << x.first << " " << x.second << endl;
+		//cout << x.first << " " << x.second << endl;
 		test.insert(make_pair(x.second, x.first));
 	}
 	priority_queue<int> w;
 	for (auto&x : test) {
-		w.push(test.find);
+		w.push(x.first);
 	}
 	//key = filename, value=indegree
 	priority_queue<int> q;
 	for (auto&x : indegrees) {
 		q.push(x.second);
 	}
-	int current_indegree = q.top();
-	cout << "queue" << endl;
+	//int current_indegree = q.top();
+	int current_indegree = w.top();
+	//cout << "queue" << endl;
 	for (int i = 0; i < q.size(); i++) {
 		//cout << q.top()<<endl;
 		//q.pop();
 	}
 
-	cout << q.size() << endl;
+	//cout << q.size() << endl;
 	//cout << "indeg" << current_indegree << endl;
 	set<string> top3;
 	for (auto& x : indegrees) {
 		if (x.second == 0) {
 			graph << "isolated=" << x.first << endl;
 		}
+		if (x.second == current_indegree) {
+			top3.insert(x.first);
+		}
 	}
 	if (top3.size() < 3) {
-		
+		while (top3.size() < 3) {
+			w.pop();
+			current_indegree = w.top();
+			for (auto&x : indegrees) {
+				if (x.second == current_indegree) {
+					top3.insert(x.first);
+				}
+			}
+		}
 	}
 
 	graph << "m=" << k << endl;
