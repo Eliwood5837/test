@@ -10,118 +10,59 @@
 #include <map>
 #include "ArgumentManager.h"
 using namespace std;
+void explorethefile(unordered_map<string, unordered_set<string>> &themap, string filename);
+void findedges(unordered_map<string, unordered_set<string>> themap, int &edge, unordered_map <string, int> &indegs);
 int main(int argc, char* argv[]) {
 
-	/*if (argc < 2) {
+	if (argc < 2) {
 		std::cerr << "Usage: spellchecker inputfile=input.txt" << std::endl;
 		return -1;
 	}
 	ArgumentManager am(argc, argv);
 	const std::string script = am.get("script");
-	std::cout << "input script file name is " << script << std::endl;*/
-	//ifstream input(script);
-	ifstream input("input.txt");
+	std::cout << "input script file name is " << script << std::endl;
 	ofstream graph("graph.txt");
-	string line;
-	unordered_map<string, unordered_set<string>> E;
-	unordered_set<string> V;
 
-	while (getline(input, line)) {
-		if (line.substr(0, 7) == "explore") {
-			for (int i = 0; i < line.length(); i++) {
-				if (line[i] == '(' || line[i] == ')' || line[i] == '\'') {
-					line[i] = ' ';
-				}
+	unordered_map<string, unordered_set<string>> Graph;
+	explorethefile(Graph, script);
 
-			}
-			stringstream test(line);
-			string func, file;
-			test >> func >> file;
-			ifstream filelist(file);
-			string newline;
-			//newline is files
-			while (getline(filelist, newline)) {
-				ifstream thefiles(newline);
-				string theline;
-				//cout << "FILE " << newline << endl;
-				while (getline(thefiles, theline)) {
-					//theline is inside
-
-					if (theline.substr(0, 7) == "<a href") {
-
-						int file = theline.find_first_of("\"");
-						string c = theline.substr(file + 1);
-						int file2 = c.find_last_of("\"");
-						c.erase(file2, c.length());
-						//c is what it links to
-						V.insert(c);
-
-					}
-					for (auto i = V.begin(); i != V.end(); i++) {
-
-					}
-
-				}
-				E.insert(make_pair(newline, V));
-				V.clear();
-
-			}
-
-		}
-
-
-
-	}
-	int k = 0;
-	for (auto& x : E) {
-		//cout << x.first << ": ";
-		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
-		//	cout << *itr << " ";
-			k++;
-		}
-		//cout << endl;
-	}
-
+	//sets all to 0 by default
 	unordered_map <string, int> indegrees;
-	for (auto&x : E) {
+	for (auto& x : Graph) {
 		indegrees.insert(make_pair(x.first, 0));
-
 	}
-	for (auto& x : E) {
-		int indeg = 0;
-
+	/*for (auto&x : Graph) {
+		cout << x.first << ": ";
 		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
-			indegrees.find(*itr)->second++;
+			cout << *itr << " ";
 		}
+		cout << endl;
+	}*/
 
-	}
+	//used to find number of edges, also gets indegrees
+	int edges = 0;
+	findedges(Graph, edges, indegrees);
+
+	/*for (auto&x : indegrees) {
+		cout << x.first << " " << x.second << endl;
+	}*/
+
+	//used to get decreasing order of degrees, also only keeps one of each
+	map<int, string> order;
 	for (auto&x : indegrees) {
-		//cout << x.first << " " << x.second << endl;
+		order.insert(make_pair(x.second, x.first));
 	}
-	map<int, string> test;
-	for (auto&x : indegrees) {
-		//cout << x.first << " " << x.second << endl;
-		test.insert(make_pair(x.second, x.first));
+
+	//only have individual indegrees, no dupes so can get the next indegree if the largest one doesn't have 3
+	priority_queue<int> indegs;
+	for (auto&x : order) {
+		indegs.push(x.first);
 	}
-	priority_queue<int> w;
-	for (auto&x : test) {
-		w.push(x.first);
-	}
+
 	//key = filename, value=indegree
-	priority_queue<int> q;
-	for (auto&x : indegrees) {
-		q.push(x.second);
-	}
-	//int current_indegree = q.top();
-	int current_indegree = w.top();
-	//cout << "queue" << endl;
-	for (int i = 0; i < q.size(); i++) {
-		//cout << q.top()<<endl;
-		//q.pop();
-	}
-
-	//cout << q.size() << endl;
-	//cout << "indeg" << current_indegree << endl;
+	int current_indegree = indegs.top();
+	
+	//final set to output
 	set<string> top3;
 	for (auto& x : indegrees) {
 		if (x.second == 0) {
@@ -131,10 +72,12 @@ int main(int argc, char* argv[]) {
 			top3.insert(x.first);
 		}
 	}
+
+	//makes sure always at least 3 in top3
 	if (top3.size() < 3) {
 		while (top3.size() < 3) {
-			w.pop();
-			current_indegree = w.top();
+			indegs.pop();
+			current_indegree = indegs.top();
 			for (auto&x : indegrees) {
 				if (x.second == current_indegree) {
 					top3.insert(x.first);
@@ -143,13 +86,66 @@ int main(int argc, char* argv[]) {
 		}
 	}
 
-	graph << "m=" << k << endl;
-	graph << "n=" << E.size() << endl;
+	//m is number of edges
+	//n is number of vertices
+	graph << "m=" << edges << endl;
+	graph << "n=" << Graph.size() << endl;
 	for (string x : top3) {
 		graph << "top3=" << x << endl;
 	}
 
+	graph.close();
 	system("pause");
 	return 0;
 }
 
+void explorethefile(unordered_map<string, unordered_set<string>> &themap, string filename){
+	ifstream input(filename);
+	unordered_set<string> V;
+	string line;
+	while (getline(input, line)) {
+		if (line.substr(0, 7) == "explore") {
+			for (int i = 0; i < line.length(); i++) {
+				if (line[i] == '(' || line[i] == ')' || line[i] == '\'') {
+					line[i] = ' ';
+				}
+			}
+			stringstream explore(line);
+			string func, file;
+			explore >> func >> file;
+			ifstream filelist(file);
+			string listoffiles;
+			while (getline(filelist, listoffiles)) {
+				ifstream thefiles(listoffiles);
+				string thelines;
+				while (getline(thefiles, thelines)) {
+					if (thelines.substr(0, 7) == "<a href") {
+						int file = thelines.find_first_of("\"");
+						string c = thelines.substr(file + 1);
+						int file2 = c.find_last_of("\"");
+						c.erase(file2, c.length());
+						//c is what it links to
+						V.insert(c);
+					}
+
+				}
+				thefiles.close();
+				themap.insert(make_pair(listoffiles, V));
+				V.clear();
+
+			}
+			filelist.close();
+		}
+
+	}
+	input.close();
+}
+
+void findedges(unordered_map<string, unordered_set<string>> themap, int &edge, unordered_map <string, int> &indegs) {
+	for (auto& x : themap) {
+		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
+			edge++;
+			indegs.find(*itr)->second++;
+		}
+	}
+}
