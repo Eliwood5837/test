@@ -11,7 +11,8 @@
 #include "ArgumentManager.h"
 using namespace std;
 void explorethefile(unordered_map<string, unordered_set<string>> &themap, string filename);
-void findedges(unordered_map<string, unordered_set<string>> themap, int &edge, unordered_map <string, int> &indegs);
+void findedges(unordered_map<string, unordered_set<string>> &themap, int &edge, unordered_map <string, int> &indegs);
+void allvertex(unordered_map<string, unordered_set<string>> &themap);
 int main(int argc, char* argv[]) {
 
 	if (argc < 2) {
@@ -25,40 +26,39 @@ int main(int argc, char* argv[]) {
 
 	unordered_map<string, unordered_set<string>> Graph;
 	explorethefile(Graph, script);
-
+	allvertex(Graph);
 	//sets all to 0 by default
 	unordered_map <string, int> indegrees;
 	for (auto& x : Graph) {
 		indegrees.insert(make_pair(x.first, 0));
 	}
-	/*for (auto&x : Graph) {
-		cout << x.first << ": ";
-		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
-			cout << *itr << " ";
-		}
-		cout << endl;
-	}*/
-
+	
+	
+	
 	//used to find number of edges, also gets indegrees
 	int edges = 0;
 	findedges(Graph, edges, indegrees);
-
-	/*for (auto&x : indegrees) {
-		cout << x.first << " " << x.second << endl;
-	}*/
-
+	
 	//used to get decreasing order of degrees, also only keeps one of each
 	map<int, string> order;
 	for (auto&x : indegrees) {
 		order.insert(make_pair(x.second, x.first));
 	}
-
+	for (auto& x : Graph) {
+		cout << x.first << ": ";
+		for (std::unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); ++itr) {
+			cout << *itr << " ";
+		}
+		cout << endl;
+	}
 	//only have individual indegrees, no dupes so can get the next indegree if the largest one doesn't have 3
 	priority_queue<int> indegs;
 	for (auto&x : order) {
 		indegs.push(x.first);
 	}
-
+	for(auto&x : indegrees) {
+		cout << x.first << ": " << x.second << endl;
+	}
 	//key = filename, value=indegree
 	int current_indegree = indegs.top();
 	
@@ -94,9 +94,20 @@ int main(int argc, char* argv[]) {
 		graph << "top3=" << x << endl;
 	}
 
-	graph.close();
 	system("pause");
+	graph.close();
 	return 0;
+}
+
+void allvertex(unordered_map<string, unordered_set<string>> &themap) {
+	unordered_set<string> empty;
+	for (auto&x : themap) {
+		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
+			if (themap.find(*itr) == themap.end()) {
+				themap.insert(make_pair(*itr, empty));
+			}
+		}
+	}
 }
 
 void explorethefile(unordered_map<string, unordered_set<string>> &themap, string filename){
@@ -141,11 +152,14 @@ void explorethefile(unordered_map<string, unordered_set<string>> &themap, string
 	input.close();
 }
 
-void findedges(unordered_map<string, unordered_set<string>> themap, int &edge, unordered_map <string, int> &indegs) {
+void findedges(unordered_map<string, unordered_set<string>> &themap, int &edge, unordered_map <string, int> &indegs) {
 	for (auto& x : themap) {
 		for (unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); itr++) {
 			edge++;
-			indegs.find(*itr)->second++;
+			if (indegs.find(*itr) != indegs.end()) {
+				indegs.find(*itr)->second++;
+			}
+			
 		}
 	}
 }
