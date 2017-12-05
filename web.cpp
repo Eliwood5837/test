@@ -13,6 +13,8 @@ using namespace std;
 void explorethefile(unordered_map<string, unordered_set<string>> &themap, string filename);
 void findedges(unordered_map<string, unordered_set<string>> &themap, int &edge, unordered_map <string, int> &indegs);
 void allvertex(unordered_map<string, unordered_set<string>> &themap);
+
+
 int main(int argc, char* argv[]) {
 
 	if (argc < 2) {
@@ -33,8 +35,6 @@ int main(int argc, char* argv[]) {
 		indegrees.insert(make_pair(x.first, 0));
 	}
 	
-	
-	
 	//used to find number of edges, also gets indegrees
 	int edges = 0;
 	findedges(Graph, edges, indegrees);
@@ -44,21 +44,13 @@ int main(int argc, char* argv[]) {
 	for (auto&x : indegrees) {
 		order.insert(make_pair(x.second, x.first));
 	}
-	for (auto& x : Graph) {
-		cout << x.first << ": ";
-		for (std::unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); ++itr) {
-			cout << *itr << " ";
-		}
-		cout << endl;
-	}
+	
 	//only have individual indegrees, no dupes so can get the next indegree if the largest one doesn't have 3
 	priority_queue<int> indegs;
 	for (auto&x : order) {
 		indegs.push(x.first);
 	}
-	for(auto&x : indegrees) {
-		cout << x.first << ": " << x.second << endl;
-	}
+	
 	//key = filename, value=indegree
 	int current_indegree = indegs.top();
 	
@@ -85,7 +77,17 @@ int main(int argc, char* argv[]) {
 			}
 		}
 	}
+	/*for (auto& x : Graph) {
+		cout << x.first << ": ";
+		for (std::unordered_set<string>::iterator itr = x.second.begin(); itr != x.second.end(); ++itr) {
+			cout << *itr << " ";
+		}
+		cout << endl;
+	}
 
+	for (auto&x : indegrees) {
+		cout << x.first << ": " << x.second << endl;
+	}*/
 	//m is number of edges
 	//n is number of vertices
 	graph << "m=" << edges << endl;
@@ -99,6 +101,7 @@ int main(int argc, char* argv[]) {
 	return 0;
 }
 
+//if text file contains a link to a file that isn't already a vertex, make it a vertex
 void allvertex(unordered_map<string, unordered_set<string>> &themap) {
 	unordered_set<string> empty;
 	for (auto&x : themap) {
